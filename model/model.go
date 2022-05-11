@@ -3,7 +3,7 @@ package model
 import "time"
 
 type Video struct {
-	Id            int64
+	ID            int64
 	UserId        int64
 	PlayUrl       string
 	CoverUrl      string
@@ -15,7 +15,7 @@ type Video struct {
 }
 
 type Comment struct {
-	Id        int64
+	ID        int64
 	UserId    int64
 	VideoId   int64
 	Content   string
@@ -25,7 +25,7 @@ type Comment struct {
 }
 
 type User struct {
-	Id            int64
+	ID            int64
 	Password      string
 	Name          string
 	Description   string
@@ -36,7 +36,7 @@ type User struct {
 }
 
 type Follow struct {
-	Id         int64
+	ID         int64
 	FolloweeId int64
 	FollowerId int64
 	IsFollow   bool
@@ -45,7 +45,7 @@ type Follow struct {
 }
 
 type Like struct {
-	Id         int64
+	ID         int64
 	VideoId    int64
 	UserId     int64
 	IsFavorite bool
