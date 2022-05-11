@@ -4,9 +4,9 @@ import "time"
 
 type Video struct {
 	ID            int64
-	UserId        int64
-	PlayUrl       string
-	CoverUrl      string
+	UserID        int64
+	PlayUrl       string `gorm:"size:1000"`
+	CoverUrl      string `gorm:"size:1000"`
 	VideoText     string
 	FavoriteCount int64
 	CommentCount  int64
@@ -16,8 +16,8 @@ type Video struct {
 
 type Comment struct {
 	ID        int64
-	UserId    int64
-	VideoId   int64
+	UserID    int64
+	VideoID   int64
 	Content   string
 	ParentId  int64
 	CreatedAt time.Time
@@ -37,8 +37,8 @@ type User struct {
 
 type Follow struct {
 	ID         int64
-	FolloweeId int64
-	FollowerId int64
+	FolloweeID int64
+	FollowerID int64
 	IsFollow   bool
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
@@ -46,8 +46,8 @@ type Follow struct {
 
 type Like struct {
 	ID         int64
-	VideoId    int64
-	UserId     int64
+	VideoID    int64
+	UserID     int64
 	IsFavorite bool
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
