@@ -1,22 +1,32 @@
 package controller
 
 import (
-	"github.com/gin-gonic/gin"
+	"douyin/service"
+	"fmt"
 	"net/http"
+	"strconv"
 	"time"
-)
 
-type FeedResponse struct {
-	Response
-	VideoList []Video `json:"video_list,omitempty"`
-	NextTime  int64   `json:"next_time,omitempty"`
-}
+	"github.com/gin-gonic/gin"
+)
 
 // Feed same demo video list for every request
 func Feed(c *gin.Context) {
-	c.JSON(http.StatusOK, FeedResponse{
-		Response:  Response{StatusCode: 0},
-		VideoList: DemoVideos,
-		NextTime:  time.Now().Unix(),
-	})
+	t := c.Query("latest_time")
+	fmt.Println(t)
+
+	timestamp, err := strconv.Atoi(t)
+	if err != nil {
+		Fail(c, http.StatusBadRequest, err)
+	}
+
+	if timestamp < 0 {
+		timestamp = int(time.Now().Unix())
+	}
+	res, err := service.Feed(time.Unix(int64(timestamp)/1e3, 0))
+	if err != nil {
+		Fail(c, http.StatusBadRequest, err)
+	}
+
+	c.JSON(http.StatusOK, res)
 }
