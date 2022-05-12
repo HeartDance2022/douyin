@@ -47,6 +47,13 @@ type FeedRequest struct {
 	Latest_time time.Time `json:"latest_time"`
 }
 
+type RelationRequest struct {
+	UserId     int64  `json:"user_id"`
+	Token      string `json:"token"`
+	ToUserId   int64  `json:"to_user_id"`
+	ActionType int32  `json:"action_type"`
+}
+
 type VideoListResponse struct {
 	Response
 	VideoList []Video `json:"video_list"`
