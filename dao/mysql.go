@@ -1,8 +1,6 @@
 package dao
 
 import (
-	"douyin/model"
-
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -22,14 +20,14 @@ func InitMySQL() (err error) {
 		return err
 	}
 
-	Migrate()
+	//Migrate()
 	return err
 }
 
-func Migrate() {
-	DB.AutoMigrate(&model.User{})
-	DB.AutoMigrate(&model.Video{})
-	DB.AutoMigrate(&model.Comment{})
-	DB.AutoMigrate(&model.Like{})
-	DB.AutoMigrate(&model.Follow{})
-}
+//func Migrate() {
+//	DB.AutoMigrate(&model.User{})
+//	DB.AutoMigrate(&model.Video{})
+//	DB.AutoMigrate(&model.Comment{})
+//	DB.AutoMigrate(&model.Like{})
+//	DB.AutoMigrate(&model.Follow{})
+//}
