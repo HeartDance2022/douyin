@@ -54,6 +54,11 @@ type RelationRequest struct {
 	ActionType int32  `json:"action_type"`
 }
 
+type FollowListResponse struct {
+	Response
+	UserList []User `json:"user_list"`
+}
+
 type VideoListResponse struct {
 	Response
 	VideoList []Video `json:"video_list"`

@@ -2,6 +2,9 @@ package model
 
 import (
 	"douyin/dao"
+	"douyin/entity"
+	"errors"
+	"fmt"
 	"gorm.io/gorm"
 	"log"
 	"time"
@@ -35,6 +38,54 @@ func Update(follow *Follow) (err error) {
 	return dao.DB.Model(follow).Updates(map[string]interface{}{
 		"is_follow": follow.IsFollow,
 	}).Error
+}
+
+// GetFollowList 获取userID的关注者
+func GetFollowList(userId int64) (users []entity.User, err error) {
+	var followList []Follow
+	err = dao.DB.Where("follower_id = ? AND is_follow = ?", userId, 1).Find(&followList).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return users, err
+	}
+	return pakUser(followList, userId, "followee")
+}
+
+// GetFollowerList 获取userID的粉丝
+func GetFollowerList(userId int64) (users []entity.User, err error) {
+	var followerList []Follow
+	err = dao.DB.Where("followee_id = ? AND is_follow = ?", userId, 1).Find(&followerList).Error
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return users, err
+	}
+	return pakUser(followerList, userId, "follower")
+}
+
+func pakUser(followerList []Follow, userId int64, name string) (users []entity.User, err error) {
+	fmt.Println(followerList, userId)
+	for _, followModel := range followerList {
+		var userModel *User
+		if name == "follower" {
+			userModel, err = GetUserById(followModel.FollowerID)
+		} else {
+			userModel, err = GetUserById(followModel.FolloweeID)
+		}
+		if err != nil {
+			continue
+		}
+		var user entity.User
+		user.Id = userModel.ID
+		user.FollowCount = userModel.FollowCount
+		user.FollowerCount = userModel.FollowerCount
+		follow, err1 := GetRelationByUserId(userId, userModel.ID)
+		if err1 != nil {
+			user.IsFollow = false
+		} else {
+			user.IsFollow = follow.IsFollow
+		}
+		users = append(users, user)
+	}
+	return users, nil
 }
 
 // AfterCreate 更新User follower_count
