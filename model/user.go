@@ -22,3 +22,15 @@ func GetUserById(id int64) (*User, error) {
 	err := dao.DB.First(&user, "id = ?", id).Error
 	return &user, err
 }
+
+// GetUserByName 通过name获取用户
+func GetUserByName(name string) (*User, error) {
+	var user User
+	err := dao.DB.First(&user, "name = ?", name).Error
+	return &user, err
+}
+
+// CreateUser 创建新用户
+func CreateUser(user *User) error {
+	return dao.DB.Create(user).Error
+}

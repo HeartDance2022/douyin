@@ -2,10 +2,9 @@ package controller
 
 import (
 	"douyin/entity"
-	"net/http"
-	"sync/atomic"
-
+	"douyin/service"
 	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 // usersLoginInfo use map to store user info, and key is username+password for demo
@@ -21,63 +20,20 @@ var usersLoginInfo = map[string]entity.User{
 	},
 }
 
-var userIdSequence = int64(1)
-
 func Register(c *gin.Context) {
 	username := c.Query("username")
 	password := c.Query("password")
-
-	token := username + password
-
-	if _, exist := usersLoginInfo[token]; exist {
-		c.JSON(http.StatusOK, entity.UserLoginResponse{
-			Response: entity.Response{StatusCode: 1, StatusMsg: "User already exist"},
-		})
-	} else {
-		atomic.AddInt64(&userIdSequence, 1)
-		newUser := entity.User{
-			Id:   userIdSequence,
-			Name: username,
-		}
-		usersLoginInfo[token] = newUser
-		c.JSON(http.StatusOK, entity.UserLoginResponse{
-			Response: entity.Response{StatusCode: 0},
-			UserId:   userIdSequence,
-			Token:    username + password,
-		})
-	}
+	c.JSON(http.StatusOK, service.Register(username, password))
 }
 
 func Login(c *gin.Context) {
 	username := c.Query("username")
 	password := c.Query("password")
-
-	token := username + password
-
-	if user, exist := usersLoginInfo[token]; exist {
-		c.JSON(http.StatusOK, entity.UserLoginResponse{
-			Response: entity.Response{StatusCode: 0},
-			UserId:   user.Id,
-			Token:    token,
-		})
-	} else {
-		c.JSON(http.StatusOK, entity.UserLoginResponse{
-			Response: entity.Response{StatusCode: 1, StatusMsg: "User doesn't exist"},
-		})
-	}
+	c.JSON(http.StatusOK, service.Login(username, password))
 }
 
 func UserInfo(c *gin.Context) {
+	userId := c.Query("user_id")
 	token := c.Query("token")
-
-	if user, exist := usersLoginInfo[token]; exist {
-		c.JSON(http.StatusOK, entity.UserResponse{
-			Response: entity.Response{StatusCode: 0},
-			User:     user,
-		})
-	} else {
-		c.JSON(http.StatusOK, entity.UserResponse{
-			Response: entity.Response{StatusCode: 1, StatusMsg: "User doesn't exist"},
-		})
-	}
+	c.JSON(http.StatusOK, service.UserInfo(userId, token))
 }
