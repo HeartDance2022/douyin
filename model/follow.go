@@ -75,6 +75,7 @@ func pakUser(followerList []Follow, userId int64, name string) (users []entity.U
 		}
 		var user entity.User
 		user.Id = userModel.ID
+		user.Name = userModel.Name
 		user.FollowCount = userModel.FollowCount
 		user.FollowerCount = userModel.FollowerCount
 		follow, err1 := GetRelationByUserId(userId, userModel.ID)
@@ -90,10 +91,16 @@ func pakUser(followerList []Follow, userId int64, name string) (users []entity.U
 
 // AfterCreate 更新User follower_count
 func (follow *Follow) AfterCreate(tx *gorm.DB) (err error) {
-	var user User
-	user.ID = follow.FolloweeID
+	var followee User
+	followee.ID = follow.FolloweeID
 
-	if err = tx.Model(&user).UpdateColumn("follower_count", gorm.Expr("follower_count + ?", 1)).Error; err != nil {
+	var follower User
+	follower.ID = follow.FollowerID
+
+	if err = tx.Model(&followee).UpdateColumn("follower_count", gorm.Expr("follower_count + ?", 1)).Error; err != nil {
+		log.Println(err)
+	}
+	if err = tx.Model(&follower).UpdateColumn("follow_count", gorm.Expr("follow_count + ?", 1)).Error; err != nil {
 		log.Println(err)
 	}
 	return
@@ -101,9 +108,16 @@ func (follow *Follow) AfterCreate(tx *gorm.DB) (err error) {
 
 // AfterUpdate 更新User follower_count
 func (follow *Follow) AfterUpdate(tx *gorm.DB) (err error) {
-	var user User
-	user.ID = follow.FolloweeID
-	if err = tx.Model(&user).UpdateColumn("follower_count", gorm.Expr("follower_count + ?", btou(follow.IsFollow))).Error; err != nil {
+	var followee User
+	followee.ID = follow.FolloweeID
+
+	var follower User
+	follower.ID = follow.FollowerID
+	if err = tx.Model(&followee).UpdateColumn("follower_count", gorm.Expr("follower_count + ?", btou(follow.IsFollow))).Error; err != nil {
+		log.Println(err)
+	}
+
+	if err = tx.Model(&follower).UpdateColumn("follow_count", gorm.Expr("follow_count + ?", btou(follow.IsFollow))).Error; err != nil {
 		log.Println(err)
 	}
 	return

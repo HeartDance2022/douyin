@@ -55,7 +55,7 @@ func Login(username string, password string) entity.UserLoginResponse {
 	}
 }
 
-// GetLoginUser 通过token返回用户信息
+// GetLoginUser 通过token返回登录的用户信息
 func GetLoginUser(token string) *model.User {
 	return usersLoginInfo[token]
 }
@@ -101,11 +101,14 @@ func UserInfo(idStr string, token string) entity.UserResponse {
 	return entity.UserResponse{
 		Response: util.SuccessResponse,
 		User: entity.User{
-			Id:            user.ID,
-			Name:          user.Name,
-			FollowCount:   user.FollowCount,
-			FollowerCount: user.FollowerCount,
-			IsFollow:      isFollowed,
+			Id:              user.ID,
+			Name:            user.Name,
+			FollowCount:     user.FollowCount,
+			FollowerCount:   user.FollowerCount,
+			IsFollow:        isFollowed,
+			Avatar:          user.Avatar,
+			Signature:       user.Signature,
+			BackgroundImage: user.BackgroundImage,
 		},
 	}
 }
