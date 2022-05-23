@@ -31,6 +31,10 @@ type User struct {
 	FollowCount   int64  `json:"follow_count,omitempty"`
 	FollowerCount int64  `json:"follower_count,omitempty"`
 	IsFollow      bool   `json:"is_follow,omitempty"`
+	// 下面三项为https://bytedance.feishu.cn/docx/doxcnbgkMy2J0Y3E6ihqrvtHXPg标注的新增作者信息
+	Avatar          string `json:"avatar,omitempty"`
+	Signature       string `json:"signature,omitempty"`
+	BackgroundImage string `json:"background_image,omitempty"`
 }
 
 type CommentListResponse struct {
