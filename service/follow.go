@@ -64,8 +64,11 @@ func GetFollowList(userId int64) (entity.FollowListResponse, error) {
 		return entity.FollowListResponse{Response: entity.Response{StatusCode: 400, StatusMsg: "userId does not exist"}}, err
 	}
 	users, err := model.GetFollowList(userId)
-	if err != nil || users == nil {
+	if err != nil {
 		return entity.FollowListResponse{Response: entity.Response{StatusCode: 400, StatusMsg: "get failure"}}, err
+	}
+	if users == nil {
+		return entity.FollowListResponse{Response: entity.Response{StatusCode: 0, StatusMsg: "关注列表为空"}}, err
 	}
 	return entity.FollowListResponse{
 		Response: entity.Response{StatusCode: 0, StatusMsg: "success"},
@@ -80,8 +83,11 @@ func GetFollowerList(userId int64) (entity.FollowListResponse, error) {
 		return entity.FollowListResponse{Response: entity.Response{StatusCode: 400, StatusMsg: "userId does not exist"}}, err
 	}
 	users, err := model.GetFollowerList(userId)
-	if err != nil || users == nil {
+	if err != nil {
 		return entity.FollowListResponse{Response: entity.Response{StatusCode: 400, StatusMsg: "get failure"}}, err
+	}
+	if users == nil {
+		return entity.FollowListResponse{Response: entity.Response{StatusCode: 0, StatusMsg: "粉丝列表为空"}}, err
 	}
 	return entity.FollowListResponse{
 		Response: entity.Response{StatusCode: 0, StatusMsg: "success"},
