@@ -2,6 +2,7 @@ package controller
 
 import (
 	"douyin/entity"
+	"douyin/service"
 	"fmt"
 	"net/http"
 	"path/filepath"
@@ -13,7 +14,7 @@ import (
 func Publish(c *gin.Context) {
 	token := c.Query("token")
 
-	if _, exist := usersLoginInfo[token]; !exist {
+	if exist := service.GetLoginUser(token); exist != nil {
 		c.JSON(http.StatusOK, entity.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
 		return
 	}

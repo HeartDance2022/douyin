@@ -6,14 +6,16 @@ import (
 )
 
 type User struct {
-	ID            int64
-	Password      string
-	Name          string
-	Description   string
-	FollowCount   int64
-	FollowerCount int64
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	ID              int64
+	Password        string
+	Name            string
+	Avatar          string
+	Signature       string
+	BackgroundImage string
+	FollowCount     int64
+	FollowerCount   int64
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
 }
 
 // GetUserById 通过ID获取用户

@@ -13,17 +13,22 @@ import (
 func RelationAction(c *gin.Context) {
 
 	var relation entity.RelationRequest
-	if err := c.ShouldBindJSON(&relation); err == nil {
-		fmt.Printf("relation info:%#v\n", relation)
-		if _, exist := usersLoginInfo[relation.Token]; exist {
-			c.JSON(http.StatusOK, entity.Response{StatusCode: 0})
-			_, err := service.Follow(&relation)
-			if err != nil {
-				return
-			}
-		} else {
-			c.JSON(http.StatusOK, entity.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
+	token := c.Query("token")
+	fmt.Println(token)
+	toUserId, _ := strconv.ParseInt(c.Query("to_user_id"), 10, 64)
+	actionType, _ := strconv.ParseInt(c.Query("action_type"), 10, 32)
+	relation.Token = token
+	relation.ActionType = int32(actionType)
+	relation.ToUserId = toUserId
+	if exist := service.GetLoginUser(relation.Token); exist != nil {
+		c.JSON(http.StatusOK, entity.Response{StatusCode: 0})
+		relation.UserId = exist.ID
+		_, err := service.Follow(&relation)
+		if err != nil {
+			return
 		}
+	} else {
+		c.JSON(http.StatusOK, entity.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
 	}
 
 }
@@ -32,7 +37,7 @@ func RelationAction(c *gin.Context) {
 func FollowList(c *gin.Context) {
 	token := c.Query("token")
 	userId, _ := strconv.ParseInt(c.Query("user_id"), 10, 64)
-	if _, exist := usersLoginInfo[token]; exist {
+	if exist := service.GetLoginUser(token); exist != nil {
 		followListResponse, err := service.GetFollowList(userId)
 		if err != nil {
 			return
@@ -49,7 +54,7 @@ func FollowList(c *gin.Context) {
 func FollowerList(c *gin.Context) {
 	token := c.Query("token")
 	userId, _ := strconv.ParseInt(c.Query("user_id"), 10, 64)
-	if _, exist := usersLoginInfo[token]; exist {
+	if exist := service.GetLoginUser(token); exist != nil {
 		followListResponse, err := service.GetFollowerList(userId)
 		if err != nil {
 			return
