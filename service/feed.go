@@ -4,6 +4,7 @@ import (
 	"douyin/dao"
 	"douyin/entity"
 	"douyin/model"
+	"douyin/util"
 	"time"
 )
 
@@ -55,8 +56,10 @@ func modelToc(i info) entity.Video {
 			FollowCount:   i.User.FollowCount,
 			FollowerCount: i.User.FollowerCount,
 		},
-		PlayUrl:       i.Video.PlayUrl,
-		CoverUrl:      i.Video.CoverUrl,
+		//通过预签名方式访问私有读写存储桶,不直接存储永久公有url
+		PlayUrl: util.ObjGetURL(i.Video.PlayUrl),
+		//通过预签名方式访问私有读写存储桶,不直接存储永久公有url
+		CoverUrl:      util.ObjGetURL(i.Video.CoverUrl),
 		FavoriteCount: i.Video.FavoriteCount,
 		CommentCount:  i.Video.CommentCount,
 	}
