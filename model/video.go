@@ -1,6 +1,9 @@
 package model
 
-import "time"
+import (
+	"douyin/dao"
+	"time"
+)
 
 type Video struct {
 	ID            int64
@@ -12,4 +15,16 @@ type Video struct {
 	CommentCount  int64
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
+}
+
+// CreateVideo Video Post
+func CreateVideo(video *Video) error {
+	return dao.DB.Create(video).Error
+}
+
+// GetPostList GetUploadList
+func GetPostList(userid int64) ([]Video, error) {
+	var videos []Video
+	err := dao.DB.Where("user_id", userid).Find(&videos).Error
+	return videos, err
 }
