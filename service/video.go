@@ -41,11 +41,14 @@ func PostList(idStr string, token string) entity.VideoListResponse {
 		isFollowed = false
 	}
 	author := entity.User{
-		Id:            user.ID,
-		Name:          user.Name,
-		FollowCount:   user.FollowCount,
-		FollowerCount: user.FollowerCount,
-		IsFollow:      isFollowed,
+		Id:              user.ID,
+		Name:            user.Name,
+		FollowCount:     user.FollowCount,
+		FollowerCount:   user.FollowerCount,
+		IsFollow:        isFollowed,
+		Avatar:          user.Avatar,
+		BackgroundImage: user.BackgroundImage,
+		Signature:       user.Signature,
 	}
 	//通过id查找用户所有投稿视频
 	videolist, err := model.GetPostList(user.ID)

@@ -28,3 +28,10 @@ func GetPostList(userid int64) ([]Video, error) {
 	err := dao.DB.Where("user_id", userid).Find(&videos).Error
 	return videos, err
 }
+
+// GetVideoById 通过ID获取视频
+func GetVideoById(id int64) (*Video, error) {
+	var video Video
+	err := dao.DB.First(&video, "id = ?", id).Error
+	return &video, err
+}

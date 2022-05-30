@@ -59,6 +59,13 @@ type RelationRequest struct {
 	ActionType int32  `json:"action_type"`
 }
 
+type LikeRequest struct {
+	UserId     int64  `json:"user_id"`
+	Token      string `json:"token"`
+	VideoId    int64  `json:"video_id"`
+	ActionType int32  `json:"action_type"`
+}
+
 type FollowListResponse struct {
 	Response
 	UserList []User `json:"user_list"`
