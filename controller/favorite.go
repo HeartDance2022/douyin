@@ -3,6 +3,7 @@ package controller
 import (
 	"douyin/entity"
 	"douyin/service"
+	"douyin/util"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -19,10 +20,10 @@ func FavoriteAction(c *gin.Context) {
 		like.UserId = exist.ID
 		_, err := service.Like(&like)
 		if err != nil {
-			return
+			c.JSON(http.StatusInternalServerError, util.ServerErrorResponse)
 		}
 	} else {
-		c.JSON(http.StatusOK, entity.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
+		c.JSON(http.StatusOK, util.TokenFailResponse)
 	}
 }
 
@@ -33,12 +34,12 @@ func FavoriteList(c *gin.Context) {
 	if exist := service.GetLoginUser(token); exist != nil {
 		videoList, err := service.GetFavoriteVideoList(userId)
 		if err != nil {
-			return
+			c.JSON(http.StatusInternalServerError, util.ServerErrorResponse)
 		}
 		c.JSON(http.StatusOK,
 			videoList,
 		)
 	} else {
-		c.JSON(http.StatusOK, entity.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
+		c.JSON(http.StatusOK, util.TokenFailResponse)
 	}
 }

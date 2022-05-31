@@ -3,6 +3,7 @@ package service
 import (
 	"douyin/entity"
 	"douyin/model"
+	"douyin/util"
 	"errors"
 	"gorm.io/gorm"
 	"time"
@@ -15,7 +16,7 @@ func Follow(relation *entity.RelationRequest) (entity.Response, error) {
 	_, err := model.GetUserById(userId)
 	_, err1 := model.GetUserById(toUserId)
 	if err != nil || err1 != nil || userId == toUserId {
-		return entity.Response{StatusCode: 400, StatusMsg: "Some users do not exist"}, err
+		return util.TokenFailResponse, err
 	}
 	//拿到关系
 	follow, err := model.GetRelationByUserId(userId, toUserId)
@@ -31,11 +32,11 @@ func Follow(relation *entity.RelationRequest) (entity.Response, error) {
 
 			err := model.Create(follow)
 			if err != nil {
-				return entity.Response{StatusCode: 400, StatusMsg: "Insertion failure"}, err
+				return util.InsertErrorResponse, err
 			}
 		} else {
 			//不存在关系没办法取消关注
-			return entity.Response{StatusCode: 400, StatusMsg: "no relationship"}, err
+			return util.ServerErrorResponse, err
 		}
 	} else {
 		if relation.ActionType == 1 {
@@ -47,31 +48,27 @@ func Follow(relation *entity.RelationRequest) (entity.Response, error) {
 		}
 		err := model.Update(follow)
 		if err != nil {
-			return entity.Response{StatusCode: 400, StatusMsg: "update failure"}, err
+			return util.UpdateErrorResponse, err
 		}
 	}
-
-	return entity.Response{
-		StatusCode: 0,
-		StatusMsg:  "success",
-	}, nil
+	return util.SuccessResponse, nil
 }
 
 func GetFollowList(userId int64) (entity.FollowListResponse, error) {
 	//先判断ID是否存在
 	_, err := model.GetUserById(userId)
 	if err != nil {
-		return entity.FollowListResponse{Response: entity.Response{StatusCode: 400, StatusMsg: "userId does not exist"}}, err
+		return entity.FollowListResponse{Response: util.TokenFailResponse}, err
 	}
 	users, err := model.GetFollowList(userId)
 	if err != nil {
-		return entity.FollowListResponse{Response: entity.Response{StatusCode: 400, StatusMsg: "get failure"}}, err
+		return entity.FollowListResponse{Response: util.ServerErrorResponse}, err
 	}
 	if users == nil {
-		return entity.FollowListResponse{Response: entity.Response{StatusCode: 0, StatusMsg: "关注列表为空"}}, err
+		return entity.FollowListResponse{Response: util.ListNilResponse}, err
 	}
 	return entity.FollowListResponse{
-		Response: entity.Response{StatusCode: 0, StatusMsg: "success"},
+		Response: util.SuccessResponse,
 		UserList: users,
 	}, nil
 }
@@ -80,17 +77,17 @@ func GetFollowerList(userId int64) (entity.FollowListResponse, error) {
 	//先判断ID是否存在
 	_, err := model.GetUserById(userId)
 	if err != nil {
-		return entity.FollowListResponse{Response: entity.Response{StatusCode: 400, StatusMsg: "userId does not exist"}}, err
+		return entity.FollowListResponse{Response: util.IDErrorResponse}, err
 	}
 	users, err := model.GetFollowerList(userId)
 	if err != nil {
-		return entity.FollowListResponse{Response: entity.Response{StatusCode: 400, StatusMsg: "get failure"}}, err
+		return entity.FollowListResponse{Response: util.ServerErrorResponse}, err
 	}
 	if users == nil {
-		return entity.FollowListResponse{Response: entity.Response{StatusCode: 0, StatusMsg: "粉丝列表为空"}}, err
+		return entity.FollowListResponse{Response: util.ListNilResponse}, err
 	}
 	return entity.FollowListResponse{
-		Response: entity.Response{StatusCode: 0, StatusMsg: "success"},
+		Response: util.SuccessResponse,
 		UserList: users,
 	}, nil
 }

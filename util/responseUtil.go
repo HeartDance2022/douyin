@@ -21,3 +21,23 @@ var ParamErrorResponse = entity.Response{
 	StatusCode: 400,
 	StatusMsg:  "参数错误",
 }
+
+var InsertErrorResponse = entity.Response{
+	StatusCode: 400,
+	StatusMsg:  "Insertion failure",
+}
+
+var UpdateErrorResponse = entity.Response{
+	StatusCode: 400,
+	StatusMsg:  "update failure",
+}
+
+var ListNilResponse = entity.Response{
+	StatusCode: 0,
+	StatusMsg:  "列表为空",
+}
+
+var IDErrorResponse = entity.Response{
+	StatusCode: 400,
+	StatusMsg:  "Id does not exist",
+}
