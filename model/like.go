@@ -87,8 +87,16 @@ func GetFavoriteVideoList(userId int64) (videoList []entity.Video, err error) {
 
 // AfterCreate 更新Video favorite_count
 func (like *Like) AfterCreate(tx *gorm.DB) (err error) {
-	video := Video{ID: like.VideoID}
+	video, _ := GetVideoById(like.VideoID)
+	user := User{ID: like.UserID}
+	likedUser, _ := GetUserById(video.UserID)
 	if err = tx.Model(&video).UpdateColumn("favorite_count", gorm.Expr("favorite_count + ?", 1)).Error; err != nil {
+		log.Println(err)
+	}
+	if err = tx.Model(&user).UpdateColumn("favorite_count", gorm.Expr("favorite_count + ?", 1)).Error; err != nil {
+		log.Println(err)
+	}
+	if err = tx.Model(&likedUser).UpdateColumn("total_favorited", gorm.Expr("total_favorited + ?", 1)).Error; err != nil {
 		log.Println(err)
 	}
 	return
@@ -96,8 +104,16 @@ func (like *Like) AfterCreate(tx *gorm.DB) (err error) {
 
 // AfterUpdate 更新Video favorite_count
 func (like *Like) AfterUpdate(tx *gorm.DB) (err error) {
-	video := Video{ID: like.VideoID}
+	video, _ := GetVideoById(like.VideoID)
+	user := User{ID: like.UserID}
+	likedUser, _ := GetUserById(video.UserID)
 	if err = tx.Model(&video).UpdateColumn("favorite_count", gorm.Expr("favorite_count + ?", btou(like.IsFavorite))).Error; err != nil {
+		log.Println(err)
+	}
+	if err = tx.Model(&user).UpdateColumn("favorite_count", gorm.Expr("favorite_count + ?", btou(like.IsFavorite))).Error; err != nil {
+		log.Println(err)
+	}
+	if err = tx.Model(&likedUser).UpdateColumn("total_favorited", gorm.Expr("total_favorited + ?", btou(like.IsFavorite))).Error; err != nil {
 		log.Println(err)
 	}
 	return
