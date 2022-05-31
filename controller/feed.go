@@ -15,6 +15,9 @@ func Feed(c *gin.Context) {
 	t := c.Query("latest_time")
 	fmt.Println(t)
 
+	token := c.Query("token")
+	user := service.GetLoginUser(token)
+
 	timestamp, err := strconv.Atoi(t)
 	if err != nil {
 		Fail(c, http.StatusBadRequest, err)
@@ -23,7 +26,7 @@ func Feed(c *gin.Context) {
 	if timestamp < 0 {
 		timestamp = int(time.Now().Unix())
 	}
-	res, err := service.Feed(time.Unix(int64(timestamp)/1e3, 0))
+	res, err := service.Feed(time.Unix(int64(timestamp)/1e3, 0), user)
 	if err != nil {
 		Fail(c, http.StatusBadRequest, err)
 	}
