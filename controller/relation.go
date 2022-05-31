@@ -3,7 +3,6 @@ package controller
 import (
 	"douyin/entity"
 	"douyin/service"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -12,14 +11,10 @@ import (
 // RelationAction no practical effect, just check if token is valid
 func RelationAction(c *gin.Context) {
 
-	var relation entity.RelationRequest
 	token := c.Query("token")
-	fmt.Println(token)
 	toUserId, _ := strconv.ParseInt(c.Query("to_user_id"), 10, 64)
 	actionType, _ := strconv.ParseInt(c.Query("action_type"), 10, 32)
-	relation.Token = token
-	relation.ActionType = int32(actionType)
-	relation.ToUserId = toUserId
+	relation := entity.RelationRequest{Token: token, ActionType: int32(actionType), ToUserId: toUserId}
 	if exist := service.GetLoginUser(relation.Token); exist != nil {
 		c.JSON(http.StatusOK, entity.Response{StatusCode: 0})
 		relation.UserId = exist.ID

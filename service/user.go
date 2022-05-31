@@ -80,10 +80,7 @@ func UserInfo(idStr string, token string) entity.UserResponse {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// 没找到
 			return entity.UserResponse{
-				Response: entity.Response{
-					StatusCode: 400,
-					StatusMsg:  "userId无效",
-				},
+				Response: util.IDErrorResponse,
 			}
 		} else {
 			// 其他错误

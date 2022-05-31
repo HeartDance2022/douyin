@@ -4,7 +4,6 @@ import (
 	"douyin/dao"
 	"douyin/entity"
 	"errors"
-	"fmt"
 	"gorm.io/gorm"
 	"log"
 	"time"
@@ -62,7 +61,6 @@ func GetFollowerList(userId int64) (users []entity.User, err error) {
 }
 
 func pakUser(followerList []Follow, userId int64, name string) (users []entity.User, err error) {
-	fmt.Println(followerList, userId)
 	for _, followModel := range followerList {
 		var userModel *User
 		if name == "follower" {
@@ -91,11 +89,9 @@ func pakUser(followerList []Follow, userId int64, name string) (users []entity.U
 
 // AfterCreate 更新User follower_count
 func (follow *Follow) AfterCreate(tx *gorm.DB) (err error) {
-	var followee User
-	followee.ID = follow.FolloweeID
+	followee := User{ID: follow.FolloweeID}
 
-	var follower User
-	follower.ID = follow.FollowerID
+	follower := User{ID: follow.FollowerID}
 
 	if err = tx.Model(&followee).UpdateColumn("follower_count", gorm.Expr("follower_count + ?", 1)).Error; err != nil {
 		log.Println(err)
@@ -108,11 +104,9 @@ func (follow *Follow) AfterCreate(tx *gorm.DB) (err error) {
 
 // AfterUpdate 更新User follower_count
 func (follow *Follow) AfterUpdate(tx *gorm.DB) (err error) {
-	var followee User
-	followee.ID = follow.FolloweeID
+	followee := User{ID: follow.FolloweeID}
 
-	var follower User
-	follower.ID = follow.FollowerID
+	follower := User{ID: follow.FollowerID}
 	if err = tx.Model(&followee).UpdateColumn("follower_count", gorm.Expr("follower_count + ?", btou(follow.IsFollow))).Error; err != nil {
 		log.Println(err)
 	}

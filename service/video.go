@@ -25,10 +25,7 @@ func PostList(idStr string, token string) entity.VideoListResponse {
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return entity.VideoListResponse{
-				Response: entity.Response{
-					StatusCode: 400,
-					StatusMsg:  "userId无效",
-				},
+				Response: util.IDErrorResponse,
 			}
 		} else {
 			log.Println(err)
@@ -41,14 +38,17 @@ func PostList(idStr string, token string) entity.VideoListResponse {
 		isFollowed = false
 	}
 	author := entity.User{
-		Id:            user.ID,
-		Name:          user.Name,
-		FollowCount:   user.FollowCount,
-		FollowerCount: user.FollowerCount,
-		IsFollow:      isFollowed,
+		Id:              user.ID,
+		Name:            user.Name,
+		FollowCount:     user.FollowCount,
+		FollowerCount:   user.FollowerCount,
+		IsFollow:        isFollowed,
+		Avatar:          user.Avatar,
+		BackgroundImage: user.BackgroundImage,
+		Signature:       user.Signature,
 	}
 	//通过id查找用户所有投稿视频
-	videolist, err := model.GetPostList(user.ID)
+	videoList, err := model.GetPostList(user.ID)
 	if err != nil {
 		return entity.VideoListResponse{}
 	}
@@ -56,7 +56,7 @@ func PostList(idStr string, token string) entity.VideoListResponse {
 		Response:  util.SuccessResponse,
 		VideoList: nil,
 	}
-	for _, video := range videolist {
+	for _, video := range videoList {
 		resp.VideoList = append(resp.VideoList, mdConv(video, author))
 	}
 	return resp
@@ -84,14 +84,14 @@ func PostVideo(form *multipart.Form) entity.Response {
 	}
 	for _, file := range files {
 		//Playback URL, Screenshot URL
-		playurl, coverurl, err := util.ObjPost(file)
+		playUrl, coverUrl, err := util.ObjPost(file)
 		if err != nil {
 			return util.ServerErrorResponse
 		}
 		err = model.CreateVideo(&model.Video{
 			UserID:    loginUser.ID,
-			PlayUrl:   playurl,
-			CoverUrl:  coverurl,
+			PlayUrl:   playUrl,
+			CoverUrl:  coverUrl,
 			VideoText: title,
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
