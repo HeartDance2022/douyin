@@ -3,6 +3,7 @@ package model
 import (
 	"douyin/dao"
 	"douyin/entity"
+	"douyin/util"
 	"errors"
 	"gorm.io/gorm"
 	"log"
@@ -72,8 +73,8 @@ func GetFavoriteVideoList(userId int64) (videoList []entity.Video, err error) {
 		VideoRep := entity.Video{
 			Id:            video.ID,
 			Author:        author,
-			PlayUrl:       video.PlayUrl,
-			CoverUrl:      video.CoverUrl,
+			PlayUrl:       util.ObjGetURL(video.PlayUrl),
+			CoverUrl:      util.ObjGetURL(video.CoverUrl),
 			FavoriteCount: video.FavoriteCount,
 			CommentCount:  video.CommentCount,
 			IsFavorite:    true,
