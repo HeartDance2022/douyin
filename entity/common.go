@@ -35,6 +35,8 @@ type User struct {
 	Avatar          string `json:"avatar,omitempty"`
 	Signature       string `json:"signature,omitempty"`
 	BackgroundImage string `json:"background_image,omitempty"`
+	FavoriteCount   int64  `json:"favorite_count,omitempty"`
+	TotalFavorited  int64  `json:"total_favorited,omitempty"`
 }
 
 type CommentListResponse struct {

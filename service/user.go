@@ -89,21 +89,19 @@ func UserInfo(idStr string, token string) entity.UserResponse {
 		}
 	}
 	// 查找关注信息
-	relation, err := model.GetRelationByUserId(thisUser.ID, user.ID)
-	var isFollowed = true
-	if err != nil || !relation.IsFollow {
-		isFollowed = false
-	}
+	var isFollowed = model.HasFollowed(thisUser.ID, user.ID)
 	// 成功
 	return entity.UserResponse{
 		Response: util.SuccessResponse,
 		User: entity.User{
 			Id:              user.ID,
 			Name:            user.Name,
-			FollowCount:     user.FollowCount,
-			FollowerCount:   user.FollowerCount,
+			FollowCount:     model.GetFolloweeCount(user.ID),
+			FollowerCount:   model.GetFollowerCount(user.ID),
 			IsFollow:        isFollowed,
 			Avatar:          user.Avatar,
+			FavoriteCount:   model.GetUserLikedCount(user.ID),
+			TotalFavorited:  model.GetUserTotalLikedCount(user.ID),
 			Signature:       user.Signature,
 			BackgroundImage: user.BackgroundImage,
 		},

@@ -4,9 +4,6 @@ import (
 	"douyin/entity"
 	"douyin/model"
 	"douyin/util"
-	"errors"
-	"gorm.io/gorm"
-	"time"
 )
 
 func Like(like *entity.LikeRequest) (entity.Response, error) {
@@ -18,40 +15,29 @@ func Like(like *entity.LikeRequest) (entity.Response, error) {
 	if err != nil || err1 != nil {
 		return util.IDErrorResponse, err
 	}
-
-	likeStation, err := model.GetLikedById(userId, videoId)
+	hasLike := model.FindLikedStatus(userId, videoId)
 	//不存在则新建，存在则更新
-	if errors.Is(err, gorm.ErrRecordNotFound) {
+	if hasLike {
 		//点赞
 		if like.ActionType == 1 {
-			likeStation.UserID = userId
-			likeStation.VideoID = videoId
-			likeStation.IsFavorite = true
-			likeStation.CreatedAt = time.Now()
-			likeStation.UpdatedAt = time.Now()
-
-			err := model.CreateLike(likeStation)
-			if err != nil {
-				return util.InsertErrorResponse, err
-			}
+			//点过赞还能点赞
+			return util.InsertErrorResponse, err
 		} else {
-			//不存在没办法取消关注
-			return util.ServerErrorResponse, err
+			delErr := model.UnLikeVideo(userId, videoId)
+			if delErr != nil {
+				return util.ServerErrorResponse, err
+			}
 		}
 	} else {
 		if like.ActionType == 1 {
-			likeStation.IsFavorite = true
-			likeStation.UpdatedAt = time.Now()
+			err = model.LikeVideo(userId, videoId)
+			if err != nil {
+				return util.ServerErrorResponse, err
+			}
 		} else {
-			likeStation.IsFavorite = false
-			likeStation.UpdatedAt = time.Now()
-		}
-		err := model.UpdateLike(likeStation)
-		if err != nil {
-			return util.UpdateErrorResponse, err
+			return util.ServerErrorResponse, err
 		}
 	}
-
 	return util.SuccessResponse, nil
 }
 

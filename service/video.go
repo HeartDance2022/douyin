@@ -32,20 +32,18 @@ func PostList(idStr string, token string) entity.VideoListResponse {
 			return entity.VideoListResponse{Response: util.ServerErrorResponse}
 		}
 	}
-	relation, err := model.GetRelationByUserId(thisUser.ID, user.ID)
-	var isFollowed = true
-	if err != nil || !relation.IsFollow {
-		isFollowed = false
-	}
+	var isFollowed = model.HasFollowed(thisUser.ID, user.ID)
 	author := entity.User{
 		Id:              user.ID,
 		Name:            user.Name,
-		FollowCount:     user.FollowCount,
-		FollowerCount:   user.FollowerCount,
+		FollowCount:     model.GetFolloweeCount(user.ID),
+		FollowerCount:   model.GetFollowerCount(user.ID),
 		IsFollow:        isFollowed,
 		Avatar:          user.Avatar,
-		BackgroundImage: user.BackgroundImage,
+		FavoriteCount:   model.GetUserLikedCount(user.ID),
+		TotalFavorited:  model.GetUserTotalLikedCount(user.ID),
 		Signature:       user.Signature,
+		BackgroundImage: user.BackgroundImage,
 	}
 	//通过id查找用户所有投稿视频
 	videoList, err := model.GetPostList(user.ID)
@@ -68,7 +66,7 @@ func mdConv(video model.Video, user entity.User) entity.Video {
 		Author:        user,
 		PlayUrl:       util.ObjGetURL(video.PlayUrl),  //Obtained through pre-signature, private links are not publishe directly
 		CoverUrl:      util.ObjGetURL(video.CoverUrl), //Obtained through pre-signature, private links are not publishe directly
-		FavoriteCount: video.FavoriteCount,
+		FavoriteCount: model.GetVideoLikedCount(video.ID),
 		CommentCount:  video.CommentCount,
 	}
 }
