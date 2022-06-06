@@ -12,8 +12,6 @@ type User struct {
 	Avatar          string
 	Signature       string
 	BackgroundImage string
-	FollowCount     int64
-	FollowerCount   int64
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 }

@@ -3,6 +3,7 @@ package controller
 import (
 	"douyin/entity"
 	"douyin/service"
+	"douyin/util"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -23,7 +24,7 @@ func RelationAction(c *gin.Context) {
 			return
 		}
 	} else {
-		c.JSON(http.StatusOK, entity.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
+		c.JSON(http.StatusOK, util.TokenFailResponse)
 	}
 
 }
@@ -33,7 +34,8 @@ func FollowList(c *gin.Context) {
 	token := c.Query("token")
 	userId, _ := strconv.ParseInt(c.Query("user_id"), 10, 64)
 	if exist := service.GetLoginUser(token); exist != nil {
-		followListResponse, err := service.GetFollowList(userId)
+		curUserId := exist.ID
+		followListResponse, err := service.GetFollowList(userId, curUserId)
 		if err != nil {
 			return
 		}
@@ -41,7 +43,7 @@ func FollowList(c *gin.Context) {
 			followListResponse,
 		)
 	} else {
-		c.JSON(http.StatusOK, entity.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
+		c.JSON(http.StatusOK, util.TokenFailResponse)
 	}
 }
 
@@ -50,7 +52,8 @@ func FollowerList(c *gin.Context) {
 	token := c.Query("token")
 	userId, _ := strconv.ParseInt(c.Query("user_id"), 10, 64)
 	if exist := service.GetLoginUser(token); exist != nil {
-		followListResponse, err := service.GetFollowerList(userId)
+		curUserId := exist.ID
+		followListResponse, err := service.GetFollowerList(userId, curUserId)
 		if err != nil {
 			return
 		}
@@ -58,6 +61,6 @@ func FollowerList(c *gin.Context) {
 			followListResponse,
 		)
 	} else {
-		c.JSON(http.StatusOK, entity.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
+		c.JSON(http.StatusOK, util.TokenFailResponse)
 	}
 }

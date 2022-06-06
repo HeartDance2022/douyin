@@ -4,66 +4,81 @@ import (
 	"douyin/dao"
 	"douyin/entity"
 	"douyin/util"
-	"errors"
-	"gorm.io/gorm"
-	"log"
-	"time"
+	"fmt"
+	"github.com/garyburd/redigo/redis"
 )
 
-type Like struct {
-	ID         int64
-	VideoID    int64
-	UserID     int64
-	IsFavorite bool
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-}
-
-// GetLikedById 通过ID判断点赞状态
-func GetLikedById(userId int64, videoId int64) (*Like, error) {
-	var like Like
-	err := dao.DB.Where(&Like{UserID: userId, VideoID: videoId}).First(&like).Error
-	return &like, err
-}
-
-// CreateLike 点赞
-func CreateLike(like *Like) (err error) {
-	if err = dao.DB.Create(&like).Error; err != nil {
-		log.Println(err)
+func LikeVideo(userId int64, videoId int64) error {
+	redisConn := dao.RedisPool.Get()
+	defer func(redisConn redis.Conn) {
+		err := redisConn.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(redisConn)
+	//开启redis事务
+	redisConn.Send("MULTI")
+	videoLikeKey := util.GetVideoLikeKey(videoId)
+	userLikedVideoKey := util.GetUserLikedVideoKey(userId)
+	_, err := redisConn.Do("SADD", videoLikeKey, userId)
+	_, err = redisConn.Do("LPUSH", userLikedVideoKey, videoId)
+	// 执行事务
+	_, err = redisConn.Do("EXEC")
+	if err != nil {
+		fmt.Println(err)
+		return err
 	}
 	return err
 }
 
-func UpdateLike(like *Like) (err error) {
-	return dao.DB.Model(like).Updates(map[string]interface{}{
-		"is_favorite": like.IsFavorite,
-	}).Error
+func UnLikeVideo(userId int64, videoId int64) error {
+	redisConn := dao.RedisPool.Get()
+	defer func(redisConn redis.Conn) {
+		err := redisConn.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(redisConn)
+	//开启redis事务
+	redisConn.Send("MULTI")
+	videoLikeKey := util.GetVideoLikeKey(videoId)
+	userLikedVideoKey := util.GetUserLikedVideoKey(userId)
+	_, err := redisConn.Do("SREM", videoLikeKey, userId)
+	_, err = redisConn.Do("LREM", userLikedVideoKey, 0, videoId)
+	// 执行事务
+	_, err = redisConn.Do("EXEC")
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	return err
 }
 
 // GetFavoriteVideoList 获取userID的点赞视频
 func GetFavoriteVideoList(userId int64) (videoList []entity.Video, err error) {
-	var likeList []Like
-	err = dao.DB.Where("user_id = ? AND is_favorite = ?", userId, 1).Find(&likeList).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return videoList, err
-	}
-	for _, likeModel := range likeList {
-		video, err := GetVideoById(likeModel.VideoID)
-		if err != nil {
+	redisConn := dao.RedisPool.Get()
+	defer func(redisConn redis.Conn) {
+		err2 := redisConn.Close()
+		if err2 != nil {
+			panic(err2)
+		}
+	}(redisConn)
+	userLikedVideoKey := util.GetUserLikedVideoKey(userId)
+	videoIds, err := redis.Ints(redisConn.Do("LRANGE", userLikedVideoKey, 0, -1))
+
+	for _, v := range videoIds {
+		video, err1 := GetVideoById(int64(v))
+		if err1 != nil {
 			continue
 		}
-		relation, err := GetRelationByUserId(userId, video.UserID)
-		var isFollowed = true
-		if err != nil || !relation.IsFollow {
-			isFollowed = false
-		}
+		var isFollowed = HasFollowed(userId, video.UserID)
 		//作者信息
-		user, err := GetUserById(video.UserID)
+		user, _ := GetUserById(video.UserID)
 		author := entity.User{
 			Id:              user.ID,
 			Name:            user.Name,
-			FollowCount:     user.FollowCount,
-			FollowerCount:   user.FollowerCount,
+			FollowCount:     GetFolloweeCount(user.ID),
+			FollowerCount:   GetFollowerCount(user.ID),
 			IsFollow:        isFollowed,
 			Avatar:          user.Avatar,
 			BackgroundImage: user.BackgroundImage,
@@ -75,46 +90,86 @@ func GetFavoriteVideoList(userId int64) (videoList []entity.Video, err error) {
 			Author:        author,
 			PlayUrl:       util.ObjGetURL(video.PlayUrl),
 			CoverUrl:      util.ObjGetURL(video.CoverUrl),
-			FavoriteCount: video.FavoriteCount,
+			FavoriteCount: GetVideoLikedCount(video.ID),
 			CommentCount:  video.CommentCount,
 			IsFavorite:    true,
 			Title:         video.VideoText,
 		}
 		videoList = append(videoList, VideoRep)
 	}
-	return videoList, nil
+	return videoList, err
 }
 
-// AfterCreate 更新Video favorite_count
-func (like *Like) AfterCreate(tx *gorm.DB) (err error) {
-	video, _ := GetVideoById(like.VideoID)
-	user := User{ID: like.UserID}
-	likedUser, _ := GetUserById(video.UserID)
-	if err = tx.Model(&video).UpdateColumn("favorite_count", gorm.Expr("favorite_count + ?", 1)).Error; err != nil {
-		log.Println(err)
+// FindLikedStatus 点赞状态
+func FindLikedStatus(userId int64, videoId int64) bool {
+	redisConn := dao.RedisPool.Get()
+	defer func(redisConn redis.Conn) {
+		err := redisConn.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(redisConn)
+	videoLikeKey := util.GetVideoLikeKey(videoId)
+	//是否存在指定key
+	flag, err := redis.Int(redisConn.Do("SISMEMBER", videoLikeKey, userId))
+	if err != nil {
+		return false
 	}
-	if err = tx.Model(&user).UpdateColumn("favorite_count", gorm.Expr("favorite_count + ?", 1)).Error; err != nil {
-		log.Println(err)
-	}
-	if err = tx.Model(&likedUser).UpdateColumn("total_favorited", gorm.Expr("total_favorited + ?", 1)).Error; err != nil {
-		log.Println(err)
-	}
-	return
+	return flag == 1
 }
 
-// AfterUpdate 更新Video favorite_count
-func (like *Like) AfterUpdate(tx *gorm.DB) (err error) {
-	video, _ := GetVideoById(like.VideoID)
-	user := User{ID: like.UserID}
-	likedUser, _ := GetUserById(video.UserID)
-	if err = tx.Model(&video).UpdateColumn("favorite_count", gorm.Expr("favorite_count + ?", btou(like.IsFavorite))).Error; err != nil {
-		log.Println(err)
+// GetVideoLikedCount 视频被点赞的数量
+func GetVideoLikedCount(videoId int64) int64 {
+	redisConn := dao.RedisPool.Get()
+	defer func(redisConn redis.Conn) {
+		err := redisConn.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(redisConn)
+	videoLikeKey := util.GetVideoLikeKey(videoId)
+	count, err := redis.Int(redisConn.Do("SCARD", videoLikeKey))
+	if err != nil {
+		return 0
 	}
-	if err = tx.Model(&user).UpdateColumn("favorite_count", gorm.Expr("favorite_count + ?", btou(like.IsFavorite))).Error; err != nil {
-		log.Println(err)
+	return int64(count)
+}
+
+// GetUserLikedCount 用户点赞的数量
+func GetUserLikedCount(userId int64) int64 {
+	redisConn := dao.RedisPool.Get()
+	defer func(redisConn redis.Conn) {
+		err := redisConn.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(redisConn)
+	userLikedVideoKey := util.GetUserLikedVideoKey(userId)
+	count, err := redis.Int(redisConn.Do("LLEN", userLikedVideoKey))
+	if err != nil {
+		return 0
 	}
-	if err = tx.Model(&likedUser).UpdateColumn("total_favorited", gorm.Expr("total_favorited + ?", btou(like.IsFavorite))).Error; err != nil {
-		log.Println(err)
+	return int64(count)
+}
+
+func GetUserTotalLikedCount(userId int64) int64 {
+	var sum int64
+	redisConn := dao.RedisPool.Get()
+	defer func(redisConn redis.Conn) {
+		err := redisConn.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(redisConn)
+	//通过id查找用户所有投稿视频
+	videoList, err := GetPostList(userId)
+	if err != nil {
+		return sum
 	}
-	return
+	for _, video := range videoList {
+		videoLikeKey := util.GetVideoLikeKey(video.ID)
+		count, _ := redis.Int(redisConn.Do("SCARD", videoLikeKey))
+		sum += int64(count)
+	}
+	return sum
 }

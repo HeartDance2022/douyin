@@ -4,9 +4,6 @@ import (
 	"douyin/entity"
 	"douyin/model"
 	"douyin/util"
-	"errors"
-	"gorm.io/gorm"
-	"time"
 )
 
 func Follow(relation *entity.RelationRequest) (entity.Response, error) {
@@ -18,54 +15,43 @@ func Follow(relation *entity.RelationRequest) (entity.Response, error) {
 	if err != nil || err1 != nil || userId == toUserId {
 		return util.TokenFailResponse, err
 	}
-	//拿到关系
-	follow, err := model.GetRelationByUserId(userId, toUserId)
-	//不存在则新建，存在则更新
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		//关注
+	//是否关注
+	hasFollowed := model.HasFollowed(userId, toUserId)
+	if hasFollowed {
 		if relation.ActionType == 1 {
-			follow.IsFollow = true
-			follow.FollowerID = userId
-			follow.FolloweeID = toUserId
-			follow.CreatedAt = time.Now()
-			follow.UpdatedAt = time.Now()
-
-			err := model.Create(follow)
-			if err != nil {
-				return util.InsertErrorResponse, err
-			}
-		} else {
-			//不存在关系没办法取消关注
+			//点过关注还能关注
 			return util.ServerErrorResponse, err
+		} else {
+			delErr := model.UnFollowing(userId, toUserId)
+			if delErr != nil {
+				return util.ServerErrorResponse, err
+			}
 		}
 	} else {
 		if relation.ActionType == 1 {
-			follow.IsFollow = true
-			follow.UpdatedAt = time.Now()
+			err = model.Following(userId, toUserId)
+			if err != nil {
+				return util.ServerErrorResponse, err
+			}
 		} else {
-			follow.IsFollow = false
-			follow.UpdatedAt = time.Now()
-		}
-		err := model.Update(follow)
-		if err != nil {
-			return util.UpdateErrorResponse, err
+			//没点关注还能取消关注
+			return util.ServerErrorResponse, err
 		}
 	}
+
 	return util.SuccessResponse, nil
 }
 
-func GetFollowList(userId int64) (entity.FollowListResponse, error) {
+func GetFollowList(userId int64, curUserId int64) (entity.FollowListResponse, error) {
 	//先判断ID是否存在
 	_, err := model.GetUserById(userId)
-	if err != nil {
+	_, err1 := model.GetUserById(curUserId)
+	if err != nil || err1 != nil {
 		return entity.FollowListResponse{Response: util.TokenFailResponse}, err
 	}
-	users, err := model.GetFollowList(userId)
+	users, err := model.GetFollowList(userId, curUserId)
 	if err != nil {
 		return entity.FollowListResponse{Response: util.ServerErrorResponse}, err
-	}
-	if users == nil {
-		return entity.FollowListResponse{Response: util.ListNilResponse}, err
 	}
 	return entity.FollowListResponse{
 		Response: util.SuccessResponse,
@@ -73,18 +59,16 @@ func GetFollowList(userId int64) (entity.FollowListResponse, error) {
 	}, nil
 }
 
-func GetFollowerList(userId int64) (entity.FollowListResponse, error) {
+func GetFollowerList(userId int64, curUserId int64) (entity.FollowListResponse, error) {
 	//先判断ID是否存在
 	_, err := model.GetUserById(userId)
-	if err != nil {
-		return entity.FollowListResponse{Response: util.IDErrorResponse}, err
+	_, err1 := model.GetUserById(curUserId)
+	if err != nil || err1 != nil {
+		return entity.FollowListResponse{Response: util.TokenFailResponse}, err
 	}
-	users, err := model.GetFollowerList(userId)
+	users, err := model.GetFollowerList(userId, curUserId)
 	if err != nil {
 		return entity.FollowListResponse{Response: util.ServerErrorResponse}, err
-	}
-	if users == nil {
-		return entity.FollowListResponse{Response: util.ListNilResponse}, err
 	}
 	return entity.FollowListResponse{
 		Response: util.SuccessResponse,

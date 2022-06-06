@@ -7,6 +7,8 @@ import (
 )
 
 func main() {
+	//初始化连接池
+	dao.InitRedis()
 	r := gin.Default()
 
 	initRouter(r)
@@ -15,7 +17,6 @@ func main() {
 	if err != nil {
 		return
 	}
-
 	err = r.Run()
 	if err != nil {
 		return
