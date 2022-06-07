@@ -93,3 +93,16 @@ type UserResponse struct {
 	Response
 	User User `json:"user"`
 }
+
+type CommentRequest struct {
+	Token       string `json:"token"`
+	VideoId     int64  `json:"video_id"`
+	ActionType  int32  `json:"action_type"`
+	CommentText string `json:"comment_text"`
+	CommentId   int64  `json:"comment_id"`
+}
+
+type CommentResponse struct {
+	Response
+	Comment
+}
