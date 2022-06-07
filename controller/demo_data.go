@@ -14,15 +14,6 @@ var DemoVideos = []entity.Video{
 	},
 }
 
-var DemoComments = []entity.Comment{
-	{
-		Id:         1,
-		User:       DemoUser,
-		Content:    "Test Comment",
-		CreateDate: "05-01",
-	},
-}
-
 var DemoUser = entity.User{
 	Id:            1,
 	Name:          "TestUser",
